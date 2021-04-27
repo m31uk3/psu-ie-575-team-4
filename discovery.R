@@ -44,7 +44,7 @@ rm(dfSoil)
 
 ## sub set ###
 str(head(dfSoilClean))
-dfSoilNot0 <- dfSoilClean[dfSoilClean$score!=0, ] # Red only
+dfSoilNot0 <- dfSoilClean[dfSoilClean$score!=0, ] # Non Zero only
 bk <- dfSoilClean
 dfSoilClean <- dfSoilNot0
 
@@ -59,7 +59,7 @@ describe(head(dfSoilClean, 100000))
 describe(dfSoilClean)[-c(2,21)]
 #describe(dfSoilClean)[order(describe(dfSoilClean[-c(2,21)])$skew, decreasing = TRUE),c("vars","skew")]
 # dT_pim <- df_pim # Skip transforming/scaling 
-pp_df_pim <- preProcess(dfSoilClean[, -c(2,21)], method = c("BoxCox", "center", "scale")) # Transform values
+pp_df_pim <- preProcess(dfSoilClean[, -c(2)], method = c("BoxCox", "center", "scale")) # Transform values
 dTSoil <- data.frame(t = predict(pp_df_pim, dfSoilClean))
 describe(dT_pim)[order(describe(dT_pim)$skew, decreasing = TRUE),c("vars","skew")]
 
@@ -121,6 +121,7 @@ str(dfSoil)
 
 # Plot Summary Analysis
 #gg_data <- df_pim
+gg_note <- " [Excl. Score = 0]"
 describe(head(dTSoil[-c(2,9,10,11,14,15,16,18,19,20)]))
 gg_data <- dTSoil[-c(2,9,10,11,14,15,16,18,19,20)]
 gg_data <- head(gg_data, 57911)
@@ -133,7 +134,8 @@ for (i in names(gg_data)) {
   mtext(names(gg_data[i]), cex=0.8, side=1, line=2)
   
 }
-mtext(paste("Histograms of Features (", length(names(gg_data)), ")", sep = ""), outer=TRUE,  cex=1.2)
+mtext(paste("Histograms of Features (", length(names(gg_data)), ")", gg_note, sep = ""), outer=TRUE,  cex=1.2)
+
 
 str(dTSoil)
 # ggplot2 code 
@@ -144,10 +146,10 @@ ggplot(dfSoilClean, aes(score)) +
 # plot boxplots of each feature for output values
 par(mfrow=c(5,4), oma = c(0,0,2,0) + 0.1,  mar = c(3,3,1,1) + 0.1)
 for (i in names(gg_data[-c(20)])) {
-  boxplot(gg_data[[i]] ~ gg_data$t.score, col="wheat2", ylab = "", xlab = "", main = "")
+  boxplot(gg_data[[i]] ~ round(gg_data$t.score), col="wheat2", ylab = "", xlab = "", main = "")
   mtext(names(gg_data[i]), cex=0.8, side=1, line=2)
 }
-mtext(paste("Boxplots of Features for Output Values (", length(names(gg_data)), ")", sep = ""), outer=TRUE,  cex=1.2)
+mtext(paste("Boxplots of Features for Output Values (", length(names(gg_data[-c(20)])), ")", gg_note, sep = ""), outer=TRUE,  cex=1.2)
 
 # test one boxplot
 boxplot(gg_data$T2M_RANGE ~ gg_data$score, col="wheat2", ylab = "", xlab = "", main = "")
@@ -159,12 +161,21 @@ dfSoilClean
 # Evaluate features for correlation
 dC_pim <- dT_pim
 dC_pim$t.diabetes <- as.numeric(dT_pim$t.diabetes) # covert to numeric output factor
-str(dfSoilClean[-c(2)])
-pim_cor <- cor(dfSoilClean[-c(2,7,6,9,5,13,11,17,12,14)])
-pim_cor <- cor(dfSoilClean[-c(2)])
+
+cor_input <- dTSoil[-c(2)] # no filter
+cor_input <- dfSoilClean[-c(2)] # no filter on non stnd data
+cor_input <- dTSoil[-c(2,7,6,4,9,5,13,8,12,17,14)] # non zero scores cor filter
+cor_input <- dTSoil[-c(2,7,6,9,5,13,11,17,12,14)] # full data set cor filter
+
+pim_cor <- cor(cor_input) 
+
+names(cor_input)
+pim_len <- length(names(cor_input))
+print(pim_len)
+
 # Plot correlation matrix
 #par(mfrow=c(1,1), oma = c(1,1,1,1) + 0.1,  mar = c(1,1,1,1) + 0.1)
-corrplot(pim_cor, type = "lower", main = paste("Correlation of Features (", 19, ")", sep = ""), mar=c(0,0,3,0), oma = c(1,1,1,1))
+corrplot(pim_cor, type = "lower", main = paste("Correlation of Features (", pim_len, ")", sep = ""), mar=c(0,0,3,0), oma = c(1,1,1,1))
 # Search for problematic features
 findCorrelation(pim_cor, cutoff = 0.90)
 findCorrelation(pim_cor, cutoff = 0.70)
