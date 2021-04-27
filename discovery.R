@@ -19,12 +19,17 @@ library(tree)
 library(e1071)
 
 ### Extract, Transform and Load (ETL) Data source ###
-dfGenre <- read.csv("/Users/lujackso/Downloads/Kaggle/spotify_century_data/data_w_genres.csv", header = TRUE, stringsAsFactors = F)
+# dfGenre <- read.csv("/Users/lujackso/Downloads/Kaggle/spotify_century_data/data_w_genres.csv", header = TRUE, stringsAsFactors = F)
 
-dfSoil <- read.csv("D:\\Users\\lujackso\\Downloads\\soil\\train_timeseries\\train_timeseries.csv", 
+dfSoil <- read.csv("D:/Users/lujackso/Downloads/soil/train_timeseries/train_timeseries.csv", 
                     header = TRUE, 
                     stringsAsFactors = F,
                     comment.char="")
+
+dfSoilTst <- read.csv("D:/Users/lujackso/Downloads/soil/test_timeseries/test_timeseries.csv", 
+                   header = TRUE, 
+                   stringsAsFactors = F,
+                   comment.char="")
 
 #dfHeart <- read_excel("/Users/lujackso/Downloads/Kaggle/spotify_century_data/data.csv")
 
@@ -100,8 +105,15 @@ dfSoilSub$YearWeek <- as.yearmon(dfSoilSub$date)
 str(dfSoilSub)
 unique(format.Date(dfSoil$date, "%m"))
 str(dfSoil)
+
+# round score in order to make manageable predictions
+# $ score      : num [1:63812] 1 2 1.49 1.5 1.28 ... # before round
+#  $ t.score      : num [1:6] 1 2 3 4 5 0 # after round
+dTSoil$t.score = round(dTSoil$t.score) 
+
+
 ulst <- lapply(round(dTSoil[-c(2)]), unique)
-ulst <- lapply(round(dfSoilClean[-c(2)]), unique)
+ulst <- lapply(dTSoil[-c(2)], unique)
 str(ulst)
 describe(head(dfSoilClean))
 str(dfSoil)
@@ -113,7 +125,7 @@ describe(head(dTSoil[-c(2,9,10,11,14,15,16,18,19,20)]))
 gg_data <- dTSoil[-c(2,9,10,11,14,15,16,18,19,20)]
 gg_data <- head(gg_data, 57911)
 gg_data <- dfSoilClean[-c(2)]
-gg_data <- dTSoil[-c(2,21)]
+gg_data <- dTSoil[-c(2)]
 # plot histogram of each feature
 par(mfrow=c(5,4), oma = c(0,0,2,0) + 0.1,  mar = c(3,3,1,1) + 0.1)
 for (i in names(gg_data)) {
@@ -123,6 +135,7 @@ for (i in names(gg_data)) {
 }
 mtext(paste("Histograms of Features (", length(names(gg_data)), ")", sep = ""), outer=TRUE,  cex=1.2)
 
+str(dTSoil)
 # ggplot2 code 
 ggplot(dfSoilClean, aes(score)) +
   geom_histogram(binwidth = 1) +
@@ -130,8 +143,8 @@ ggplot(dfSoilClean, aes(score)) +
 
 # plot boxplots of each feature for output values
 par(mfrow=c(5,4), oma = c(0,0,2,0) + 0.1,  mar = c(3,3,1,1) + 0.1)
-for (i in names(gg_data[-c(11)])) {
-  boxplot(gg_data[[i]] ~ gg_data$score, col="wheat2", ylab = "", xlab = "", main = "")
+for (i in names(gg_data[-c(20)])) {
+  boxplot(gg_data[[i]] ~ gg_data$t.score, col="wheat2", ylab = "", xlab = "", main = "")
   mtext(names(gg_data[i]), cex=0.8, side=1, line=2)
 }
 mtext(paste("Boxplots of Features for Output Values (", length(names(gg_data)), ")", sep = ""), outer=TRUE,  cex=1.2)
