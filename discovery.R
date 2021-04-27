@@ -26,7 +26,12 @@ dfSoil <- read.csv("D:/Users/lujackso/Downloads/soil/train_timeseries/train_time
                     stringsAsFactors = F,
                     comment.char="")
 
-dfSoilTst <- read.csv("D:/Users/lujackso/Downloads/soil/test_timeseries/test_timeseries.csv", 
+dfSoil <- read.csv("D:/Users/lujackso/Downloads/soil/test_timeseries/test_timeseries.csv", 
+                   header = TRUE, 
+                   stringsAsFactors = F,
+                   comment.char="")
+
+dfSoil <- read.csv("D:/Users/lujackso/Downloads/soil/validation_timeseries/validation_timeseries.csv", 
                    header = TRUE, 
                    stringsAsFactors = F,
                    comment.char="")
@@ -39,8 +44,48 @@ length(dfSoil[is.na(dfSoil$score),])
 dfSoilClean <- na.omit(dfSoil) # Show rows with missing data
 rm(dfSoil)
 
+dfTest <- bk[1:50000,]
+
+dfTest$week_num <- week(dfTest$date)
+dfTest$year <- year(dfTest$date)
+str(dfTest)
+unique(dfTest$year)
+
+names(bk)
+
+vignette("colwise")
+
+dfSoilSumVal <- dfSoilClean %>% 
+        group_by(yr_mon = paste(year(as.Date(date)), month(as.Date(date)), sep = "-"), fips) %>%
+        summarise(across(where(is.numeric), mean), .groups = "keep")
+          #tally() %>%
+          #summarise(score = mean(score), PRECTOT = mean(PRECTOT), n = n())
+
+  #group_by(qtr = paste(quarters(as.Date(date)), year(as.Date(date)), sep = "-")) %>%
+  #select(-date) %>%
+  #summarise_each(funs(count))
+  #group_by(year, week_num) %>% 
+  #select(-date) %>%
+  #mutate(score_mean = mean(score)) %>%
+  #head(30)
+  #summarise(count = count(score))
+
+
+ulst <- lapply(round(dfSoilSum[-c(1)]), unique)
+str(ulst)
+view(head(dfSoilSumVal))
+head(dfSoilSumVal)
+names(dfSoilSum2)
+write.csv(dfSoilSum2, "D:/Users/lujackso/Downloads/soil/train_timeseries/train_soil_by_month.csv", row.names = FALSE)
+write.csv(dfSoilSumTst, "D:/Users/lujackso/Downloads/soil/test_timeseries/test_soil_by_month.csv", row.names = FALSE)
+write.csv(dfSoilSumVal, "D:/Users/lujackso/Downloads/soil/validation_timeseries/validation_soil_by_month.csv", row.names = FALSE)
+
+
+
+
 ## free up space
-rm(dfSoil)
+rm(dfTest)
+# rm(list = setdiff(ls(), ls(pattern="bk*")))
 
 ## sub set ###
 str(head(dfSoilClean))
@@ -145,11 +190,11 @@ ggplot(dfSoilClean, aes(score)) +
 
 # plot boxplots of each feature for output values
 par(mfrow=c(5,4), oma = c(0,0,2,0) + 0.1,  mar = c(3,3,1,1) + 0.1)
-for (i in names(gg_data[-c(20)])) {
-  boxplot(gg_data[[i]] ~ round(gg_data$t.score), col="wheat2", ylab = "", xlab = "", main = "")
+for (i in names(gg_data[-c(1)])) {
+  boxplot(gg_data[[i]] ~ round(gg_data$t.fips), col="wheat2", ylab = "", xlab = "", main = "")
   mtext(names(gg_data[i]), cex=0.8, side=1, line=2)
 }
-mtext(paste("Boxplots of Features for Output Values (", length(names(gg_data[-c(20)])), ")", gg_note, sep = ""), outer=TRUE,  cex=1.2)
+mtext(paste("Boxplots of Features for Output Values (", length(names(gg_data[-c(1)])), ")", gg_note, sep = ""), outer=TRUE,  cex=1.2)
 
 # test one boxplot
 boxplot(gg_data$T2M_RANGE ~ gg_data$score, col="wheat2", ylab = "", xlab = "", main = "")

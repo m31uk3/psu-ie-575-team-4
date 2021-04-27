@@ -1,3 +1,6 @@
 *
 !README.md
 !.gitignore
+!test_soil_by_month.csv.gz
+!train_soil_by_month.csv.gz
+!validation_soil_by_month.csv.gz
