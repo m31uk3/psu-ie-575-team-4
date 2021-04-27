@@ -131,13 +131,13 @@ ggplot(dfSoilClean, aes(score)) +
 # plot boxplots of each feature for output values
 par(mfrow=c(5,4), oma = c(0,0,2,0) + 0.1,  mar = c(3,3,1,1) + 0.1)
 for (i in names(gg_data[-c(11)])) {
-  boxplot(gg_data[[i]] ~ gg_data$t.score, col="wheat2", ylab = "", xlab = "", main = "")
+  boxplot(gg_data[[i]] ~ gg_data$score, col="wheat2", ylab = "", xlab = "", main = "")
   mtext(names(gg_data[i]), cex=0.8, side=1, line=2)
 }
 mtext(paste("Boxplots of Features for Output Values (", length(names(gg_data)), ")", sep = ""), outer=TRUE,  cex=1.2)
 
 # test one boxplot
-boxplot(gg_data$fips ~ gg_data$score, col="wheat2", ylab = "", xlab = "", main = "")
+boxplot(gg_data$T2M_RANGE ~ gg_data$score, col="wheat2", ylab = "", xlab = "", main = "")
 
 
 #TODO: check memory usage of large vars
@@ -148,9 +148,10 @@ dC_pim <- dT_pim
 dC_pim$t.diabetes <- as.numeric(dT_pim$t.diabetes) # covert to numeric output factor
 str(dfSoilClean[-c(2)])
 pim_cor <- cor(dfSoilClean[-c(2,7,6,9,5,13,11,17,12,14)])
+pim_cor <- cor(dfSoilClean[-c(2)])
 # Plot correlation matrix
 #par(mfrow=c(1,1), oma = c(1,1,1,1) + 0.1,  mar = c(1,1,1,1) + 0.1)
-corrplot(pim_cor, type = "lower", main = paste("Correlation of Features (", 19, ")", sep = ""), mar=c(1,0,1,0), oma = c(1,1,1,1))
+corrplot(pim_cor, type = "lower", main = paste("Correlation of Features (", 19, ")", sep = ""), mar=c(0,0,3,0), oma = c(1,1,1,1))
 # Search for problematic features
 findCorrelation(pim_cor, cutoff = 0.90)
 findCorrelation(pim_cor, cutoff = 0.70)
