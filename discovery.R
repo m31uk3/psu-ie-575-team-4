@@ -21,7 +21,10 @@ library(e1071)
 ### Extract, Transform and Load (ETL) Data source ###
 dfGenre <- read.csv("/Users/lujackso/Downloads/Kaggle/spotify_century_data/data_w_genres.csv", header = TRUE, stringsAsFactors = F)
 
-dfSoil <- read.csv("/Users/lujackso/Downloads/Kaggle/weather_soil_data/train_timeseries/train_timeseries.csv", header = TRUE, stringsAsFactors = F)
+dfSoil <- read.csv("/Users/lujackso/Downloads/Kaggle/weather_soil_data/train_timeseries/train_timeseries.csv", 
+                    header = TRUE, 
+                    stringsAsFactors = F,
+                    comment.char="")
 
 #dfHeart <- read_excel("/Users/lujackso/Downloads/Kaggle/spotify_century_data/data.csv")
 
@@ -29,6 +32,18 @@ df_wine <- df_wine[df_wine$winetype=="red", ] # Red only
 
 length(dfSoil[is.na(dfSoil$score),])
 dfSoilClean <- na.omit(dfSoil) # Show rows with missing data
+rm(dfSoil)
+
+## free up space
+rm(dfSoil)
+
+## sub set ###
+str(head(dfSoilClean))
+dfSoilNot0 <- dfSoilClean[dfSoilClean$score!=0, ] # Red only
+bk <- dfSoilClean
+dfSoilClean <- dfSoilNot0
+
+
 
 describe(dfSoilClean)
 
@@ -38,17 +53,17 @@ describe(dfSoilClean)
 describe(head(dfSoilClean, 100000))
 describe(dfSoilClean)[-c(2,21)]
 #describe(dfSoilClean)[order(describe(dfSoilClean[-c(2,21)])$skew, decreasing = TRUE),c("vars","skew")]
-dT_pim <- df_pim # Skip transforming/scaling 
-pp_df_pim <- preProcess(df_pim[, -c(9)], method = c("BoxCox", "center", "scale")) # Transform values
-dT_pim <- data.frame(t = predict(pp_df_pim, df_pim))
+# dT_pim <- df_pim # Skip transforming/scaling 
+pp_df_pim <- preProcess(dfSoilClean[, -c(2,21)], method = c("BoxCox", "center", "scale")) # Transform values
+dTSoil <- data.frame(t = predict(pp_df_pim, dfSoilClean))
 describe(dT_pim)[order(describe(dT_pim)$skew, decreasing = TRUE),c("vars","skew")]
 
 # Remove Outliers greater than 3 standard deviations (assumes scaled data; mean of zero)
-describe(dT_pim[-c(9)])
-for (i in names(dT_pim[-c(9)])) {
-  dT_pim <- dT_pim[!abs(dT_pim[[i]]) > 3 ,]
+describe(head(dTSoil[-c(2,21)]))
+for (i in names(dTSoil[-c(2,21)])) {
+  dTSoil <- dTSoil[!abs(dTSoil[[i]]) > 3 ,]
 }
-describe(dT_pim[-c(9)])
+describe(dTSoil[-c(2,21)])
 
 
 dfSoilSub <- dfSoil[format.Date(dfSoil$date, "%Y")=="2009" &
@@ -85,6 +100,7 @@ dfSoilSub$YearWeek <- as.yearmon(dfSoilSub$date)
 str(dfSoilSub)
 unique(format.Date(dfSoil$date, "%m"))
 str(dfSoil)
+ulst <- lapply(round(dTSoil[-c(2)]), unique)
 ulst <- lapply(round(dfSoilClean[-c(2)]), unique)
 str(ulst)
 describe(head(dfSoilClean))
@@ -93,7 +109,11 @@ str(dfSoil)
 
 # Plot Summary Analysis
 #gg_data <- df_pim
-gg_data <- dfSoilClean[-c(2,21)]
+describe(head(dTSoil[-c(2,9,10,11,14,15,16,18,19,20)]))
+gg_data <- dTSoil[-c(2,9,10,11,14,15,16,18,19,20)]
+gg_data <- head(gg_data, 57911)
+gg_data <- dfSoilClean[-c(2)]
+gg_data <- dTSoil[-c(2,21)]
 # plot histogram of each feature
 par(mfrow=c(5,4), oma = c(0,0,2,0) + 0.1,  mar = c(3,3,1,1) + 0.1)
 for (i in names(gg_data)) {
@@ -103,16 +123,38 @@ for (i in names(gg_data)) {
 }
 mtext(paste("Histograms of Features (", length(names(gg_data)), ")", sep = ""), outer=TRUE,  cex=1.2)
 
+# ggplot2 code 
+ggplot(dfSoilClean, aes(score)) +
+  geom_histogram(binwidth = 1) +
+  facet_wrap(~score,scales="free")
+
 # plot boxplots of each feature for output values
 par(mfrow=c(5,4), oma = c(0,0,2,0) + 0.1,  mar = c(3,3,1,1) + 0.1)
-for (i in names(gg_data)) {
-  boxplot(gg_data[[i]] ~ gg_data$score, col="wheat2", ylab = "", xlab = "", main = "")
+for (i in names(gg_data[-c(11)])) {
+  boxplot(gg_data[[i]] ~ gg_data$t.score, col="wheat2", ylab = "", xlab = "", main = "")
   mtext(names(gg_data[i]), cex=0.8, side=1, line=2)
 }
 mtext(paste("Boxplots of Features for Output Values (", length(names(gg_data)), ")", sep = ""), outer=TRUE,  cex=1.2)
 
+# test one boxplot
+boxplot(gg_data$fips ~ gg_data$score, col="wheat2", ylab = "", xlab = "", main = "")
+
+
 #TODO: check memory usage of large vars
 dfSoilClean
+
+# Evaluate features for correlation
+dC_pim <- dT_pim
+dC_pim$t.diabetes <- as.numeric(dT_pim$t.diabetes) # covert to numeric output factor
+str(dfSoilClean[-c(2)])
+pim_cor <- cor(dfSoilClean[-c(2,7,6,9,5,13,11,17,12,14)])
+# Plot correlation matrix
+#par(mfrow=c(1,1), oma = c(1,1,1,1) + 0.1,  mar = c(1,1,1,1) + 0.1)
+corrplot(pim_cor, type = "lower", main = paste("Correlation of Features (", 19, ")", sep = ""), mar=c(1,0,1,0), oma = c(1,1,1,1))
+# Search for problematic features
+findCorrelation(pim_cor, cutoff = 0.90)
+findCorrelation(pim_cor, cutoff = 0.70)
+
 
 str(head(dfSoil))
 names(dfSoil)
