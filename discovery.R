@@ -21,7 +21,7 @@ library(e1071)
 ### Extract, Transform and Load (ETL) Data source ###
 dfGenre <- read.csv("/Users/lujackso/Downloads/Kaggle/spotify_century_data/data_w_genres.csv", header = TRUE, stringsAsFactors = F)
 
-dfSoil <- read.csv("/Users/lujackso/Downloads/Kaggle/weather_soil_data/train_timeseries/train_timeseries.csv", 
+dfSoil <- read.csv("D:\\Users\\lujackso\\Downloads\\soil\\train_timeseries\\train_timeseries.csv", 
                     header = TRUE, 
                     stringsAsFactors = F,
                     comment.char="")
