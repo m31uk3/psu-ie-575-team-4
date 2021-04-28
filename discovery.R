@@ -84,8 +84,8 @@ write.csv(dfSoilSumVal, "D:/Users/lujackso/Downloads/soil/validation_timeseries/
 
 
 ## free up space
-rm(dfTest)
-# rm(list = setdiff(ls(), ls(pattern="bk*")))
+rm(dfSoil)
+rm(list = setdiff(ls(), ls(pattern="bk*")))
 
 ## sub set ###
 str(head(dfSoilClean))
