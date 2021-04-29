@@ -1,27 +1,36 @@
 #C.50 Models for Soil Data
 library(C50)
 library(nnet)
+library(corrplot)
+library(caret)
+
 
 
 ### Extract, Transform and Load (ETL) Data source ###
 # dfGenre <- read.csv("/Users/lujackso/Downloads/Kaggle/spotify_century_data/data_w_genres.csv", header = TRUE, stringsAsFactors = F)
 
 #dfSoil <- read.csv("D:/Users/lujackso/Downloads/soil/train_timeseries/train_timeseries.csv", 
-dfSoilTr <- read.csv("/Users/lujackso/Downloads/DAAN-570-302-scratch/psu-ie-575-team-4/data/train_soil_by_month.csv", 
+
+
+dfSoilTr <- read.csv("C:/Users/gvmds/Downloads/psu-ie-575-team-4/data/train_soil_by_month.csv", 
+#dfSoilTr <- read.csv("/Users/lujackso/Downloads/DAAN-570-302-scratch/psu-ie-575-team-4/data/train_soil_by_month.csv", 
                      header = TRUE, 
                      stringsAsFactors = F,
                      comment.char="")
 
-dfSoilTs <- read.csv("/Users/lujackso/Downloads/DAAN-570-302-scratch/psu-ie-575-team-4/data/test_soil_by_month.csv", 
+dfSoilTs <- read.csv("C:/Users/gvmds/Downloads/psu-ie-575-team-4/data/test_soil_by_month.csv", 
+#dfSoilTs <- read.csv("/Users/lujackso/Downloads/DAAN-570-302-scratch/psu-ie-575-team-4/data/test_soil_by_month.csv", 
                      header = TRUE, 
                      stringsAsFactors = F,
                      comment.char="")
 
-dfSoilVa <- read.csv("/Users/lujackso/Downloads/DAAN-570-302-scratch/psu-ie-575-team-4/data/validation_soil_by_month.csv", 
+dfSoilVa <- read.csv("C:/Users/gvmds/Downloads/psu-ie-575-team-4/data/validation_soil_by_month.csv", 
+#dfSoilVa <- read.csv("/Users/lujackso/Downloads/DAAN-570-302-scratch/psu-ie-575-team-4/data/validation_soil_by_month.csv", 
                      header = TRUE, 
                      stringsAsFactors = F,
                      comment.char="")
 
+rm(dfSoilsr)
 
 str(dfSoilTr)
 
@@ -63,12 +72,15 @@ dfSoilPP <- preProcess(dfSoilTr[-c(1,21)], method = c("range"))
 dfSoilPP_train <- cbind(predict(dfSoilPP, dfSoilTr[-c(1)]), Type = dfSoilTr$score)
 dfSoilPP_test <- cbind(predict(dfSoilPP, dfSoilTs[-c(1)]), Type = dfSoilTs$score)
 
+ulst <- lapply(round(dfSoilPP_train[-c(1)]), unique)
+str(ulst)
+
 # run the nnet model
 nn_model_0 <- nnet(score ~ ., data = dfSoilPP_train, size=10, maxit = 1000)
 train_predictions <- predict(nn_model_0, dfSoilPP_train, type = "class")
 mean(train_predictions == dfSoilTr$score)
 
-nn_model_1 <- nnet(score ~ ., data = dfSoilTr, size=30, maxit = 10000, decay = 0.01) # Queston C
+nn_model_1 <- nnet(score ~ ., data = dfSoilTr, size=10, maxit = 2000, decay = 0.01) # Queston C
 train_predictions <- predict(nn_model_1, dfSoilPP_train, type = "class")
 mean(train_predictions == dfSoilTr$score)
 
@@ -79,9 +91,14 @@ mean(test_predictions == dfSoilTs$score)
 # build regression trees
 # Decision tree classification with C50
 # Decision [regression] tree classification with rpart [R implementation of CART] 
-dfHeart_c50 <- C5.0(score ~ ., data=dfSoilTr, trials=1)
+
+dfSoilPP_train$score <- as.factor(dfSoilPP_train$score) # convert to factor
+dfSoilPP_test$score <- as.factor(dfSoilPP_test$score) # convert to factor
+
+
+dfHeart_c50 <- C5.0(score ~ ., data=dfSoilPP_train, trials=1)
 dfHeart_c50
-dfHeart_c50T <- C5.0(score ~ ., data=dfSoilTr, trials=50)
+dfHeart_c50T <- C5.0(score ~ ., data=dfSoilPP_train, trials=50)
 dfHeart_c50T
 
 # Compare results

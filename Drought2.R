@@ -22,21 +22,32 @@ soil_train <- read.csv('C:/Users/Nidhi/OneDrive/Desktop/train_timeseries/train_p
 
 #soil_validation <- read.csv('C:/Users/Nidhi/OneDrive/Desktop/validation_timeseries/validation_pp.csv')
 
+soil_train <- dfSoilTr
+soil_test <- dfSoilTs
+soil_validation <- dfSoilVa
+
 soil_original <- soil_train
+
+describe(soil_train)
 
 unique(soil_train$date)
 unique(soil_test$date)
 unique(soil_validation$date)
+ulst <- lapply(soil_train, unique)
+str(ulst)
+ulst$yr_mon
 
 #DATASET'S TOO LARGE TO PROCESS ANYTHING SO WE REDUCE THE OBSERVATIONS AND TAKE 5 YEARS OF DATA (2011-2016)
 
 soil_subset <- subset(x = soil_train[soil_train$date >= "2011-01-04",])
+soil_subset <- soil_train
 
 dim(soil_subset)
 
 str(soil_subset)
 
 #Converting the columns to numeric for data analysis
+#soil_subset <- soil_downsampling #TODO hack remove this
 
 soil_subset$fips = as.numeric(soil_subset$fips)
 
@@ -48,7 +59,8 @@ str(soil_subset)
 
 #EXPLORATORY DATA ANALYSIS
 
-soil_cor <- cor(soil_subset[, -2])
+soil_cor <- cor(soil_subset[, -c(1)])
+#soil_cor <- cor(soil_subset)
 
 cor_with_score <- data.frame(soil_cor[20,])
 
@@ -57,13 +69,15 @@ cor_with_score
 #The correlation matrix shows that, only 
 #PS, T2M_MAX, T2M_RANGE, TS, WS10M_RANGE ARE CORRELATED TO OUR DEPENDENT VARIABLE~ SCORE.
 
-corrplot(soil_cor)
+corrplot(soil_cor, type = "lower")
+
 
 sort(findCorrelation(soil_cor, cutoff = 0.75, names=T)) # High Correlation among 
 #"QV2M"        "T2M"         "T2M_MAX"     "T2M_MIN"     "T2MDEW"      "T2MWET"     
 #"WS10M"       "WS10M_MAX"   "WS10M_MIN"   "WS10M_RANGE" "WS50M"       "WS50M_MAX"  
 
 soil_nodate <- soil_subset[, -2]
+soil_nodate <- soil_subset[, -1] #month data
 str(soil_nodate)
 
 # plot histogram of each feature
@@ -76,10 +90,21 @@ for (i in names(soil_nodate)) {
 mtext(paste("Histograms of Features (", length(names(soil_nodate)), ")", sep = ""), outer=TRUE,  cex=1.2)
 
 #THE HISTOGRAM PLOT SHOWS THAT THE FEATURES ARE NOT NORMALLY DISTRIBUTED
-
+pp_df_pim <- preProcess(soil_nodate[, -c(20)], method = c("range"))
 pp_df_pim <- preProcess(soil_nodate[, -c(20)], method = c("BoxCox", "center", "scale")) # Transform values
 
 pp_soil <- data.frame(predict(pp_df_pim, soil_nodate))
+
+
+# Remove outliers
+describe(pp_soil)
+for (i in names(pp_soil[-c(20)])) {
+  pp_soil <- pp_soil[!abs(pp_soil[[i]]) > 3 ,]
+}
+
+pp_soil$score = round(pp_soil$score) 
+
+
 
 summary(pp_soil)
 
@@ -97,10 +122,13 @@ mtext(paste("Histograms of Scaled Features (", length(names(pp_soil)), ")", sep 
 summary(pp_soil)
 
 # plot boxplots of each feature for output values
+par(mfrow=c(5,4), oma = c(0,0,2,0) + 0.1,  mar = c(3,3,1,1) + 0.1)
 for (i in names(pp_soil)) {
-  boxplot(pp_soil[[i]] ~ pp_soil$score, col="wheat2", ylab = "", xlab = "", main = c("Boxplot of", i, "vs Score"))
+  boxplot(pp_soil[[i]] ~ pp_soil$score, col="wheat2", ylab = "", xlab = "", main = "")
   mtext(names(pp_soil[i]), cex=0.8, side=1, line=2)
 }
+mtext(paste("BoxPlots of Scaled Features (", length(names(pp_soil)), ")", sep = ""), outer=TRUE,  cex=1.2)
+
 
 
 #MODEL BUILDING
@@ -109,7 +137,10 @@ for (i in names(pp_soil)) {
 
 str(pp_soil)
 
+pp_soil <- pp_soil[pp_soil$score!=0, ] # Non Zero only, 
 pp_soil$score <- as.factor(pp_soil$score)
+soil_downsampling <- pp_soil # and skip downsample
+
 
 table(pp_soil$score)
 
