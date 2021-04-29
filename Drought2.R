@@ -11,7 +11,6 @@ library(ROCR)
 library(scales)
 library(rpart)
 library(e1071)
-install.packages('DMwR')
 library(DMwR)
 library(nnet)
 
@@ -19,11 +18,9 @@ set.seed(100)
 
 soil_train <- read.csv('C:/Users/Nidhi/OneDrive/Desktop/train_timeseries/train_pp.csv')
 
-data.frame(names(soil_train))
+#soil_test <- read.csv('C:/Users/Nidhi/OneDrive/Desktop/test_timeseries/test_pp.csv')
 
-soil_test <- read.csv('C:/Users/Nidhi/OneDrive/Desktop/test_timeseries/test_pp.csv')
-
-soil_validation <- read.csv('C:/Users/Nidhi/OneDrive/Desktop/validation_timeseries/validation_pp.csv')
+#soil_validation <- read.csv('C:/Users/Nidhi/OneDrive/Desktop/validation_timeseries/validation_pp.csv')
 
 soil_original <- soil_train
 
@@ -39,6 +36,8 @@ dim(soil_subset)
 
 str(soil_subset)
 
+#Converting the columns to numeric for data analysis
+
 soil_subset$fips = as.numeric(soil_subset$fips)
 
 soil_subset$date = as.Date(soil_subset$date)
@@ -47,53 +46,92 @@ soil_subset$score <- as.numeric(soil_subset$score)
 
 str(soil_subset)
 
+#EXPLORATORY DATA ANALYSIS
+
 soil_cor <- cor(soil_subset[, -2])
 
 cor_with_score <- data.frame(soil_cor[20,])
 
 cor_with_score
 
+#The correlation matrix shows that, only 
+#PS, T2M_MAX, T2M_RANGE, TS, WS10M_RANGE ARE CORRELATED TO OUR DEPENDENT VARIABLE~ SCORE.
+
 corrplot(soil_cor)
 
-sort(findCorrelation(soil_cor, cutoff = 0.7))
+sort(findCorrelation(soil_cor, cutoff = 0.75, names=T)) # High Correlation among 
+#"QV2M"        "T2M"         "T2M_MAX"     "T2M_MIN"     "T2MDEW"      "T2MWET"     
+#"WS10M"       "WS10M_MAX"   "WS10M_MIN"   "WS10M_RANGE" "WS50M"       "WS50M_MAX"  
+
+soil_nodate <- soil_subset[, -2]
+str(soil_nodate)
+
+# plot histogram of each feature
+par(mfrow=c(5,4), oma = c(0,0,2,0) + 0.1,  mar = c(3,3,1,1) + 0.1)
+for (i in names(soil_nodate)) {
+  hist(soil_nodate[[i]], col="wheat2", ylab = "", xlab = "", main = "")
+  mtext(names(soil_nodate[i]), cex=0.8, side=1, line=2)
+  
+}
+mtext(paste("Histograms of Features (", length(names(soil_nodate)), ")", sep = ""), outer=TRUE,  cex=1.2)
+
+#THE HISTOGRAM PLOT SHOWS THAT THE FEATURES ARE NOT NORMALLY DISTRIBUTED
+
+pp_df_pim <- preProcess(soil_nodate[, -c(20)], method = c("BoxCox", "center", "scale")) # Transform values
+
+pp_soil <- data.frame(predict(pp_df_pim, soil_nodate))
+
+summary(pp_soil)
+
+# plot histogram of preprocessed feature
+par(mfrow=c(5,4), oma = c(0,0,2,0) + 0.1,  mar = c(3,3,1,1) + 0.1)
+for (i in names(pp_soil)) {
+  hist(pp_soil[[i]], col="wheat2", ylab = "", xlab = "", main = "")
+  mtext(names(pp_soil[i]), cex=0.8, side=1, line=2)
+  
+}
+mtext(paste("Histograms of Scaled Features (", length(names(pp_soil)), ")", sep = ""), outer=TRUE,  cex=1.2)
+
+#The data has been scaled and normalized
+
+summary(pp_soil)
+
+# plot boxplots of each feature for output values
+for (i in names(pp_soil)) {
+  boxplot(pp_soil[[i]] ~ pp_soil$score, col="wheat2", ylab = "", xlab = "", main = c("Boxplot of", i, "vs Score"))
+  mtext(names(pp_soil[i]), cex=0.8, side=1, line=2)
+}
+
 
 #MODEL BUILDING
 
 #DOWNSAMPLING TO IMPROVE PREDICTION
 
-str(soil_subset)
+str(pp_soil)
 
-soil_subset$score <- as.factor(soil_subset$score)
-
-table(soil_subset$score)
-
-soil_downsampling <- downSample(x = soil_subset[, -2], y = soil_subset$score, list = FALSE)
-
-table(soil_downsampling$score)
-
-str(soil_downsampling)
-
-#preprocessing
-
-pp_df_pim <- preProcess(soil_downsampling[, -c(20,21)], method = c("BoxCox", "center", "scale")) # Transform values
-
-pp_soil <- data.frame(predict(pp_df_pim, soil_downsampling))
+pp_soil$score <- as.factor(pp_soil$score)
 
 table(pp_soil$score)
 
-soil <- pp_soil[, -21]
-                          
-split <- createDataPartition(soil$score, p= 0.8, list = FALSE)
+soil_downsampling <- downSample(x = pp_soil[,-20], y = pp_soil$score, list = FALSE, yname = 'score')
 
-soil_train <- soil[split, ]
+str(soil_downsampling)
 
-soil_test <- soil[-split,]
+table(soil_downsampling$score)
+
+#preprocessing
+
+split <- createDataPartition(soil_downsampling$score, p= 0.8, list = FALSE)
+
+soil_train <- soil_downsampling[split, ]
+
+soil_test <- soil_downsampling[-split,]
 
 #According to the correlation matrix, only PS, T2M_MAX, T2M_RANGE, TS, WS10M_RANGE ARE CORRELATED TO OUR DEPENDENT VARIABLE SCORE.
 
 #BUILDING A MODEL USING ONLY THESE COLUMNS
 
-feats <- names(soil[c(1, 2, 3, 8, 10, 15, 19)])
+feats <- names(soil_downsampling[c(1,  3, 8, 10, 15)])
 
 feats
 
@@ -184,10 +222,11 @@ prediction_train =predict(model_RPART,soil_train, "class")
 
 (mean(prediction_train==soil_train$score))
 
+cm <- confusionMatrix(data= prediction_train, reference = soil_train$score)
+
 #NEURAL NETWORK
 
-model_nn <- nnet(f,soil_train, size=80, linout = FALSE, 
-                 maxit = 10000)
+model_nn <- nnet(f,soil_train, size=80, linout = FALSE, maxit = 10000)
 
 
 prediction_test =predict(model_nn,soil_test, 'class')
@@ -197,3 +236,16 @@ prediction_train =predict(model_nn,soil_train, 'class')
 (mean(prediction_test==soil_test$score))
 
 (mean(prediction_train==soil_train$score))
+
+#SVM
+
+classifierR = svm(formula = f,
+                  data = soil_train,
+                  x = soil_train[, -20],
+                  y= soil_train$score,
+                  type = 'C-classification',
+                  kernel = 'radial')
+
+
+?svm
+
