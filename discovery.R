@@ -21,17 +21,18 @@ library(e1071)
 ### Extract, Transform and Load (ETL) Data source ###
 # dfGenre <- read.csv("/Users/lujackso/Downloads/Kaggle/spotify_century_data/data_w_genres.csv", header = TRUE, stringsAsFactors = F)
 
-dfSoil <- read.csv("D:/Users/lujackso/Downloads/soil/train_timeseries/train_timeseries.csv", 
+#dfSoil <- read.csv("D:/Users/lujackso/Downloads/soil/train_timeseries/train_timeseries.csv", 
+dfSoilTr <- read.csv("/Users/lujackso/Downloads/DAAN-570-302-scratch/psu-ie-575-team-4/data/train_soil_by_month.csv", 
                     header = TRUE, 
                     stringsAsFactors = F,
                     comment.char="")
 
-dfSoil <- read.csv("D:/Users/lujackso/Downloads/soil/test_timeseries/test_timeseries.csv", 
+dfSoilTs <- read.csv("/Users/lujackso/Downloads/DAAN-570-302-scratch/psu-ie-575-team-4/data/test_soil_by_month.csv", 
                    header = TRUE, 
                    stringsAsFactors = F,
                    comment.char="")
 
-dfSoil <- read.csv("D:/Users/lujackso/Downloads/soil/validation_timeseries/validation_timeseries.csv", 
+dfSoilVa <- read.csv("/Users/lujackso/Downloads/DAAN-570-302-scratch/psu-ie-575-team-4/data/validation_soil_by_month.csv", 
                    header = TRUE, 
                    stringsAsFactors = F,
                    comment.char="")
@@ -161,7 +162,7 @@ ulst <- lapply(round(dTSoil[-c(2)]), unique)
 ulst <- lapply(dTSoil[-c(2)], unique)
 str(ulst)
 describe(head(dfSoilClean))
-str(dfSoil)
+str(dfSoilTr)
 
 
 # Plot Summary Analysis
@@ -171,7 +172,7 @@ describe(head(dTSoil[-c(2,9,10,11,14,15,16,18,19,20)]))
 gg_data <- dTSoil[-c(2,9,10,11,14,15,16,18,19,20)]
 gg_data <- head(gg_data, 57911)
 gg_data <- dfSoilClean[-c(2)]
-gg_data <- dTSoil[-c(2)]
+gg_data <- dfSoilTr[-c(1,21)]
 # plot histogram of each feature
 par(mfrow=c(5,4), oma = c(0,0,2,0) + 0.1,  mar = c(3,3,1,1) + 0.1)
 for (i in names(gg_data)) {
