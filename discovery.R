@@ -77,9 +77,9 @@ str(ulst)
 view(head(dfSoilSumVal))
 head(dfSoilSumVal)
 names(dfSoilSum2)
-write.csv(dfSoilSum2, "D:/Users/lujackso/Downloads/soil/train_timeseries/train_soil_by_month.csv", row.names = FALSE)
-write.csv(dfSoilSumTst, "D:/Users/lujackso/Downloads/soil/test_timeseries/test_soil_by_month.csv", row.names = FALSE)
-write.csv(dfSoilSumVal, "D:/Users/lujackso/Downloads/soil/validation_timeseries/validation_soil_by_month.csv", row.names = FALSE)
+write.csv(dfSoilTrSum, "C:/Users/gvmds/Downloads/psu-ie-575-team-4/data/train_soil_by_month.csv", row.names = FALSE)
+write.csv(dfSoilTsSum, "C:/Users/gvmds/Downloads/psu-ie-575-team-4/data/test_soil_by_month.csv", row.names = FALSE)
+write.csv(dfSoilVaSum, "C:/Users/gvmds/Downloads/psu-ie-575-team-4/data/validation_soil_by_month.csv", row.names = FALSE)
 
 
 

@@ -78,6 +78,7 @@ sort(findCorrelation(soil_cor, cutoff = 0.75, names=T)) # High Correlation among
 
 soil_nodate <- soil_subset[, -2]
 soil_nodate <- soil_subset[, -1] #month data
+soil_nodate <- soil_subset
 str(soil_nodate)
 
 # plot histogram of each feature
@@ -127,7 +128,7 @@ for (i in names(pp_soil)) {
   boxplot(pp_soil[[i]] ~ pp_soil$score, col="wheat2", ylab = "", xlab = "", main = "")
   mtext(names(pp_soil[i]), cex=0.8, side=1, line=2)
 }
-mtext(paste("BoxPlots of Scaled Features (", length(names(pp_soil)), ")", sep = ""), outer=TRUE,  cex=1.2)
+mtext(paste("BoxPlots of Normalized Features (", length(names(pp_soil)), ")", sep = ""), outer=TRUE,  cex=1.2)
 
 
 
@@ -137,9 +138,13 @@ mtext(paste("BoxPlots of Scaled Features (", length(names(pp_soil)), ")", sep = 
 
 str(pp_soil)
 
+pp_soil$score = round(pp_soil$score, 0) 
 pp_soil <- pp_soil[pp_soil$score!=0, ] # Non Zero only, 
 pp_soil$score <- as.factor(pp_soil$score)
 soil_downsampling <- pp_soil # and skip downsample
+
+ulst <- lapply(soil_downsampling, unique)
+str(ulst)
 
 
 table(pp_soil$score)
@@ -257,7 +262,9 @@ cm <- confusionMatrix(data= prediction_train, reference = soil_train$score)
 
 #NEURAL NETWORK
 
-model_nn <- nnet(f,soil_train, size=80, linout = FALSE, maxit = 10000)
+model_nn <- nnet(f,soil_downsampling, size=80, linout = FALSE, maxit = 10000)
+
+#model_nn <- nnet(f,soil_train, size=80, linout = FALSE, maxit = 10000)
 
 
 prediction_test =predict(model_nn,soil_test, 'class')

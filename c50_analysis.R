@@ -12,19 +12,24 @@ library(caret)
 #dfSoil <- read.csv("D:/Users/lujackso/Downloads/soil/train_timeseries/train_timeseries.csv", 
 
 
-dfSoilTr <- read.csv("C:/Users/gvmds/Downloads/psu-ie-575-team-4/data/train_soil_by_month.csv", 
-#dfSoilTr <- read.csv("/Users/lujackso/Downloads/DAAN-570-302-scratch/psu-ie-575-team-4/data/train_soil_by_month.csv", 
+#dfSoilTr <- read.csv("C:/Users/gvmds/Downloads/psu-ie-575-team-4/data/train_soil_by_month.csv", 
+dfSoilTr <- read.csv("C:/Users/gvmds/Downloads/train_timeseries/train_timeseries.csv",
+                     #dfSoilTr <- read.csv("/Users/lujackso/Downloads/DAAN-570-302-scratch/psu-ie-575-team-4/data/train_soil_by_month.csv", 
                      header = TRUE, 
                      stringsAsFactors = F,
                      comment.char="")
 
-dfSoilTs <- read.csv("C:/Users/gvmds/Downloads/psu-ie-575-team-4/data/test_soil_by_month.csv", 
+#dfSoilTs <- read.csv("C:/Users/gvmds/Downloads/psu-ie-575-team-4/data/test_soil_by_month.csv", 
+dfSoilTs <- read.csv("C:/Users/gvmds/Downloads/test_timeseries/test_timeseries.csv",
 #dfSoilTs <- read.csv("/Users/lujackso/Downloads/DAAN-570-302-scratch/psu-ie-575-team-4/data/test_soil_by_month.csv", 
                      header = TRUE, 
                      stringsAsFactors = F,
                      comment.char="")
 
-dfSoilVa <- read.csv("C:/Users/gvmds/Downloads/psu-ie-575-team-4/data/validation_soil_by_month.csv", 
+
+
+#dfSoilVa <- read.csv("C:/Users/gvmds/Downloads/psu-ie-575-team-4/data/validation_soil_by_month.csv", 
+dfSoilVa <- read.csv("C:/Users/gvmds/Downloads/validation_timeseries/validation_timeseries.csv",
 #dfSoilVa <- read.csv("/Users/lujackso/Downloads/DAAN-570-302-scratch/psu-ie-575-team-4/data/validation_soil_by_month.csv", 
                      header = TRUE, 
                      stringsAsFactors = F,
